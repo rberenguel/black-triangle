@@ -1,0 +1,43 @@
+version: '3'
+
+tasks:
+  mac:
+    cmds:
+      - cmake -B build.mac -DPLATFORM=Desktop
+      - cmake --build build.mac -j8
+      - ./build.mac/black_triangle
+
+  web:
+    cmds:
+      - emcmake cmake -B build.web -DPLATFORM=Web
+      - emmake make -C build.web -j8
+
+  serve:
+    cmds:
+      - python3 -m http.server 8080 --directory build.web
+
+  miyoo-image:
+    cmds:
+      - docker build -f Dockerfile.miyoo -t black-triangle-miyoo .
+
+  miyoo:
+    cmds:
+      - docker run --rm -v "$(pwd):/src" black-triangle-miyoo
+          cmake -B /src/build.miyoo -DPLATFORM=DRM
+          -DCMAKE_TOOLCHAIN_FILE=/src/toolchains/miyoo-a30.cmake
+      - docker run --rm -v "$(pwd):/src" black-triangle-miyoo
+          cmake --build /src/build.miyoo -j8
+
+  deploy-miyoo:
+    desc: "Copy Miyoo build to mounted SD card (set SDCARD env var to override mount point)"
+    vars:
+      SDCARD: '{{.SDCARD | default "/Volumes/A30"}}'
+    cmds:
+      - mkdir -p "{{.SDCARD}}/Roms/PORTS/blacktriangle"
+      - cp build.miyoo/black_triangle "{{.SDCARD}}/Roms/PORTS/blacktriangle/"
+      - cp deploy/spruce.sh "{{.SDCARD}}/Roms/PORTS/Black Triangle.sh"
+      - echo "Deployed to {{.SDCARD}}"
+
+  clean:
+    cmds:
+      - rm -rf build.mac build.web build.miyoo

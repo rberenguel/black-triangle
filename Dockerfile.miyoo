@@ -1,0 +1,21 @@
+FROM ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN dpkg --add-architecture armhf && \
+    apt-get update && \
+    apt-get install -y \
+        cmake \
+        make \
+        gcc-arm-linux-gnueabihf \
+        g++-arm-linux-gnueabihf \
+        libdrm-dev:armhf \
+        libgles2-mesa-dev:armhf \
+        libegl-dev:armhf \
+        libgbm-dev:armhf \
+        git \
+    && rm -rf /var/lib/apt/lists/*
+
+ENV CC=arm-linux-gnueabihf-gcc
+ENV CXX=arm-linux-gnueabihf-g++
+WORKDIR /src
