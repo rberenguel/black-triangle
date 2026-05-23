@@ -1,4 +1,7 @@
 build.mac/
 build.web/
 build.miyoo/
+build.test/
+toolchains/libs/
+
 .DS_Store

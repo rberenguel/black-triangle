@@ -7,14 +7,21 @@ tasks:
       - cmake --build build.mac -j8
       - ./build.mac/black_triangle
 
+  test:
+    cmds:
+      - cmake -B build.test -DPLATFORM=Desktop
+      - cmake --build build.test -j8 --target tests
+      - cd build.test && ctest --output-on-failure
+
   web:
     cmds:
-      - emcmake cmake -B build.web -DPLATFORM=Web
+      - mkdir -p web
+      - emcmake cmake -B build.web -DPLATFORM=Web -DCMAKE_RUNTIME_OUTPUT_DIRECTORY=$(pwd)/web
       - emmake make -C build.web -j8
 
   serve:
     cmds:
-      - python3 -m http.server 8080 --directory build.web
+      - python3 -m http.server 8080 --directory web
 
   miyoo-image:
     cmds:
@@ -23,8 +30,10 @@ tasks:
   miyoo:
     cmds:
       - docker run --rm -v "$(pwd):/src" black-triangle-miyoo
-          cmake -B /src/build.miyoo -DPLATFORM=DRM
+          cmake -B /src/build.miyoo -DPLATFORM=SDL -DBUILD_SHARED_LIBS=OFF
+          -DGRAPHICS=GRAPHICS_API_OPENGL_ES2
           -DCMAKE_TOOLCHAIN_FILE=/src/toolchains/miyoo-a30.cmake
+          -DSDL2_DIR=/src/toolchains/cmake/SDL2
       - docker run --rm -v "$(pwd):/src" black-triangle-miyoo
           cmake --build /src/build.miyoo -j8
 
@@ -33,11 +42,13 @@ tasks:
     vars:
       SDCARD: '{{.SDCARD | default "/Volumes/A30"}}'
     cmds:
-      - mkdir -p "{{.SDCARD}}/Roms/PORTS/blacktriangle"
-      - cp build.miyoo/black_triangle "{{.SDCARD}}/Roms/PORTS/blacktriangle/"
-      - cp deploy/spruce.sh "{{.SDCARD}}/Roms/PORTS/Black Triangle.sh"
+      - mkdir -p "{{.SDCARD}}/Roms/A30PORTS/blacktriangle"
+      - cp build.miyoo/black_triangle "{{.SDCARD}}/Roms/A30PORTS/blacktriangle/"
+      - cp toolchains/libs/libSDL2-2.0.so.0 "{{.SDCARD}}/Roms/A30PORTS/blacktriangle/"
+      - cp deploy/spruce.sh "{{.SDCARD}}/Roms/A30PORTS/Black Triangle.sh"
       - echo "Deployed to {{.SDCARD}}"
 
   clean:
     cmds:
-      - rm -rf build.mac build.web build.miyoo
+      - rm -rf build.mac build.web build.miyoo build.test
+

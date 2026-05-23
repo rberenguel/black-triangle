@@ -3,7 +3,9 @@
 # set stick to d-pad mode
 killall -q -USR2 joystickinput
 
-cd /mnt/SDCARD/Roms/PORTS/blacktriangle
+export LD_LIBRARY_PATH=/mnt/SDCARD/Roms/A30PORTS/blacktriangle:$LD_LIBRARY_PATH
+
+cd /mnt/SDCARD/Roms/A30PORTS/blacktriangle
 ./black_triangle
 
 # set stick to analog mode

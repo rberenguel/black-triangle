@@ -1,21 +1,21 @@
-FROM ubuntu:24.04
+FROM --platform=linux/amd64 ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN dpkg --add-architecture armhf && \
-    apt-get update && \
-    apt-get install -y \
-        cmake \
-        make \
-        gcc-arm-linux-gnueabihf \
-        g++-arm-linux-gnueabihf \
-        libdrm-dev:armhf \
-        libgles2-mesa-dev:armhf \
-        libegl-dev:armhf \
-        libgbm-dev:armhf \
-        git \
-    && rm -rf /var/lib/apt/lists/*
+    sed -i 's/^Signed-By:/Architectures: amd64\nSigned-By:/' /etc/apt/sources.list.d/ubuntu.sources && \
+    printf 'Types: deb\nURIs: http://ports.ubuntu.com/ubuntu-ports\nSuites: noble noble-updates\nComponents: main restricted universe multiverse\nArchitectures: armhf\nSigned-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg\n' \
+        > /etc/apt/sources.list.d/ubuntu-ports.sources && \
+    apt-get update && apt-get install -y cmake make git wget xz-utils libsdl2-dev:armhf && \
+    rm -rf /var/lib/apt/lists/* && \
+    ln -s /usr/include/arm-linux-gnueabihf/SDL2 /usr/include/SDL2/SDL2
 
+# Linaro GCC 6.4.1 — matches Miyoo A30 firmware toolchain (glibc 2.23 target sysroot)
+RUN wget -q "https://releases.linaro.org/components/toolchain/binaries/6.4-2018.05/arm-linux-gnueabihf/gcc-linaro-6.4.1-2018.05-x86_64_arm-linux-gnueabihf.tar.xz" -O /tmp/gcc.tar.xz && \
+    tar -xJf /tmp/gcc.tar.xz -C /opt && \
+    rm /tmp/gcc.tar.xz
+
+ENV PATH="/opt/gcc-linaro-6.4.1-2018.05-x86_64_arm-linux-gnueabihf/bin:$PATH"
 ENV CC=arm-linux-gnueabihf-gcc
 ENV CXX=arm-linux-gnueabihf-g++
 WORKDIR /src
